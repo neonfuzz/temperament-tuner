@@ -147,7 +147,10 @@ class Tuner:
         desired_idx = np.abs(self.temperament.frequencies-freq).argmin()
         desired_freq = self.temperament.frequencies[desired_idx]
         desired_note = self.temperament.notes[desired_idx]
-        cents = int(1200 * np.log2(freq/desired_freq))
+        try:
+            cents = int(1200 * np.log2(freq/desired_freq))
+        except OverflowError:
+            cents = 0
 
         # Plot local maximum on frequency spectrum.
         xs = np.array([freq, freq])
