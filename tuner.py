@@ -13,10 +13,10 @@ When run:
 """
 
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pyaudio
-
-import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
 from temperaments import JustTemperament
 
@@ -136,28 +136,33 @@ class Tuner:
         plt.xlabel('frequency (Hz)')
         plt.ylabel('amplitude')
 
-        # Identify local maximum.
-        freq = np.abs(freqs[fft.argmax()])
-        amp = fft.max()
-        self._best_freq = np.append(self._best_freq, freq)
-        desired_idx = np.abs(self.temperament.frequencies-freq).argmin()
-        desired_freq = self.temperament.frequencies[desired_idx]
-        desired_note = self.temperament.notes[desired_idx]
-        try:
-            cents = int(1200 * np.log2(freq/desired_freq))
-        except OverflowError:
-            cents = 0
+        # Identify peaks.
+        peaks, _ = find_peaks(fft, height=min(25, fft.max()/2), distance=200)
+        peaks = peaks[:len(peaks)//2]
+        peak_freqs = freqs[peaks]
+        peak_amps = fft[peaks]
+        for freq, amp in zip(peak_freqs, peak_amps):
+            if amp == peak_amps.max():
+                self._best_freq = np.append(self._best_freq, freq)
+            desired_idx = np.abs(self.temperament.frequencies-freq).argmin()
+            desired_freq = self.temperament.frequencies[desired_idx]
+            desired_note = self.temperament.notes[desired_idx]
+            try:
+                cents = int(1200 * np.log2(freq/desired_freq))
+            except OverflowError:
+                cents = 0
 
-        # Plot local maximum on frequency spectrum.
-        xs = np.array([freq, freq])
-        ys = np.array([0, amp])
-        plt.plot(xs, ys, color='red')
+            # Plot local maximum on frequency spectrum.
+            xs = np.array([freq, freq])
+            ys = np.array([0, amp])
+            plt.plot(xs, ys, color='red')
 
-        # Label local maximum with nearest note and cents sharp/flat.
-        sign = '+' if cents > 0 else ''
-        note_str = '%s %s%s' % (desired_note, sign, cents)
-        print(note_str)
-        plt.text(freq+20, amp-5, note_str, fontsize=24)
+            # Label peak with nearest note and cents sharp/flat.
+            sign = '+' if cents > 0 else ''
+            note_str = '%s %s%s' % (desired_note, sign, cents)
+            if amp == peak_amps.max():
+                print(note_str)
+            plt.text(freq+20, amp-5, note_str, fontsize=16)
 
         # Keep things looking nice; don't update too often.
         plt.tight_layout()
