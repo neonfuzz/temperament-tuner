@@ -52,7 +52,7 @@ class Tuner:
             chunk (int) - how often to read audio and calculate `fft`,
                 default 2048
             start_thresh (float 0-1) - noise must be above this threshold
-                to be processed, default 0.1
+                to be processed, default 0.05
             temperament (temperaments.Temperament) - Tuning temperament to
                 use, default JustTemperament
         """
@@ -60,7 +60,7 @@ class Tuner:
         self.channels = 1
         self.rate = 16000
         self.chunk = 2048
-        self.start_thresh = 0.1
+        self.start_thresh = 0.05
         self.temperament = JustTemperament()
         for key, value in kwargs.items():
             self.__dict__[key] = value
@@ -101,7 +101,7 @@ class Tuner:
 
     def fft(self):
         """Calculate the FFT of `data`."""
-        fft = np.fft.fft(self._data).real
+        fft = np.fft.fft(self._data, n=self.rate).real
         frequencies = np.fft.fftfreq(len(fft)) * self.rate
         return frequencies, fft
 
