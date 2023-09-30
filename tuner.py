@@ -109,22 +109,18 @@ class Tuner:
         """
         Plot `data` from audio input.
         
-        Three sub-plots:
+        Two sub-plots:
             Waveform: amplitude vs time
             Frequency spectrum: amplitude vs frequency
                 "best" frequency is indicated with a dashed vertical line
                 and a text label indicating the tone and cents sharp/flat
-            Predicted frequency vs time
-                Show predicted frequency so you can easily tell if it is
-                trending sharp or flat. The nearest tone is shown with a
-                dashed horizontal line.
         """
         # pylint: disable=invalid-name
         # 'xs' is a totally valid name for x-data.
         plt.clf()
 
         # Plot waveform.
-        plt.subplot(311)
+        plt.subplot(211)
         xs = np.arange(0, len(self._data)) / self.rate
         plt.plot(xs, self._data)
         plt.xlabel('time (s)')
@@ -132,7 +128,7 @@ class Tuner:
 
         # Plot frequency spectrum.
         freqs, fft = self.fft()
-        plt.subplot(312)
+        plt.subplot(212)
         plt.plot(freqs, fft)
         plt.xlim([self.temperament.frequencies.min()-100,
                   self.temperament.frequencies.max()+100])
@@ -162,15 +158,6 @@ class Tuner:
         note_str = '%s %s%s' % (desired_note, sign, cents)
         print(note_str)
         plt.text(freq+20, amp-5, note_str, fontsize=24)
-
-        # Plot predicted frequency over time.
-        plt.subplot(313)
-        xs = np.arange(0, len(self._best_freq)) / self.rate * self.chunk
-        plt.plot(xs, self._best_freq)
-        plt.plot(xs, [desired_freq]*len(xs), color='red')
-        plt.ylim([desired_freq-10, desired_freq+10])
-        plt.xlabel('time (s)')
-        plt.ylabel('predicted frequeny (Hz)')
 
         # Keep things looking nice; don't update too often.
         plt.tight_layout()
